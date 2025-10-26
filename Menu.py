@@ -1,11 +1,13 @@
-# Menu for user interactions (provided by lecturer)
+# Menu for user interactions (base provided by lecturer)
 # sample.abc reference: https://abcnotation.com/examples
-#
+
+# relevant imports
 import os
 from pickle import TRUE
 import sys
 import renderer
 
+# default settings using in menu options
 settings = {
     "waveform": "sine",
     "loudness": 0.5,
@@ -16,9 +18,13 @@ settings = {
     "mixWavPath": None,
 }
 
+# clear screen function
+
 
 def cls():
     os.system('cls' if os.name == 'nt' else 'clear')
+
+# menu option functions
 
 
 def option1():
@@ -35,6 +41,8 @@ def option2():
     except:
         print("Invalid loudness value.")
         input()
+
+# renderer load ABC file from renderer module
 
 
 def option3():
@@ -64,7 +72,14 @@ def option5():
 def option6():
     cls()
     print("Select background noise type:")
-    settings["noiseType"] = input().strip()
+    i = input().strip().lower()
+    if i in ["white", "pink", "brown"]:
+        settings["noiseType"] = i
+        print("Noise type set to:", {i})
+    else:
+        settings["noiseType"] = None
+        print("Invalid noise type. No noise will be added.")
+    input("Press Enter to continue...")
 
 
 def option7():
@@ -74,6 +89,8 @@ def option7():
     settings["mixWavPath"] = i
     print("External WAV file set to:", {i})
     input("Press Enter to continue...")
+
+# renders and plays music using renderer module for both .abc and .wav mixing
 
 
 def option8():
@@ -89,10 +106,16 @@ def option8():
 
         if settings.get("mixWavPath"):
             wave = renderer.mixWithWav(wave, settings["mixWavPath"])
+
+        if settings.get("noiseType"):
+            wave = renderer.add_noise(wave, settings["noiseType"])
+
         renderer.play(wave)
     except Exception as e:
         print("Error during rendering or playback:", e)
         input()
+
+# saves rendered music to WAV file (mixing and non-mixing)
 
 
 def option9():
@@ -109,6 +132,9 @@ def option9():
     if settings.get("mixWavPath"):
         wave = renderer.mixWithWav(wave, settings["mixWavPath"])
 
+    if settings.get("noiseType"):
+        wave = renderer.add_noise(wave, settings["noiseType"])
+
     renderer.saveToWav(wave, outPath)
     print("Saved to", outPath)
 
@@ -120,6 +146,7 @@ def option10():
         sys.exit()
 
 
+# main loop
 if __name__ == "__main__":
     while (TRUE):
         cls()

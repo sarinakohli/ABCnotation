@@ -1,15 +1,21 @@
 # loads abc file, generates waveforms, plays sound and saves to a WAV file
 # references:
-import numpy as np
-import sounddevice as sd
-from scipy.io.wavfile import write
-from scipy import signal
-from music21 import converter, note
-from scipy.io.wavfile import read as wav_read
+# Generating waveforms: https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.square.html
+# sounddevice for playback: https://python-sounddevice.readthedocs.io/en/0.4.6/
+# scipy.io.wavfile for WAV file handling: https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.write.html
+# music21 for ABC parsing: https://www.music21.org/music21docs/usersGuide/usersGuide_02_notes.html
+import numpy as np  # type: ignore
+import sounddevice as sd  # type: ignore
+from scipy.io.wavfile import write  # type: ignore
+from scipy import signal  # type: ignore
+from music21 import converter, note  # type: ignore
+from scipy.io.wavfile import read as wav_read  # type: ignore
 
 sampleRate = 44100
 
 notesData = []
+
+# loads ABC file by each note and stores frequency and duration in notesData list
 
 
 def loadABC(filePath):
@@ -23,6 +29,8 @@ def loadABC(filePath):
             notesData.append((freq, dur))
     print("Loaded", len(notesData), "notes from", filePath)
     return notesData
+
+# generates waveform for a single note
 
 
 def generateWaveform(frequency, duration, waveform="sine", volume=0.5):
@@ -39,8 +47,10 @@ def generateWaveform(frequency, duration, waveform="sine", volume=0.5):
         wave = signal.sawtooth(2 * np.pi * frequency * t)
     return volume * wave
 
+# renders full music piece by concatenating note waveforms
 
-def renderMusic(waveform="sine", volume=0.5, bpm=120, pitchShift=0):
+
+def renderMusic(waveform="sine", volume=0.5, pitchShift=0):
     global notesData
     if not notesData:
         raise Exception("No ABC file loaded")
@@ -52,20 +62,49 @@ def renderMusic(waveform="sine", volume=0.5, bpm=120, pitchShift=0):
         finalWav = np.concatenate((finalWav, noteWav))
     return finalWav
 
+# plays the generated waveform
+
 
 def play(wave):
     sd.play(wave, sampleRate)
     sd.wait()
+
+# saves the generated waveform to a WAV file using scipy.io.wavfile
 
 
 def saveToWav(wave, filename="output.wav"):
     write(filename, sampleRate, (wave * 32767).astype(np.int16))
     print("Save as", {filename})
 
+# adds noise to the waveform for white noise, pink noise, or brown noise
 
-def add_noise(wave, noise="white", noiseLevel=0.02):
-    noise = np.random.normal(0, noiseLevel, len(wave))
-    return wave + noise
+
+def add_noise(wave, noiseType="pink", noiseLevel=0.08):
+    n = len(wave)
+    if noiseType == "white":
+        noise = np.random.normal(0, 1, n)
+    elif noiseType == "pink":
+        uneven = n % 2
+        X = np.random.randn(n // 2 + 1 + uneven) + 1j * \
+            np.random.randn(n // 2 + 1 + uneven)
+        S = np.sqrt(np.arange(len(X)) + 1.)
+        y = (np.fft.irfft(X / S)).real
+        if uneven:
+            y = y[:-1]
+        y = y / np.max(np.abs(y))
+        noise = y
+    elif noiseType == "brown":
+        white = np.random.normal(0, 1, n)
+        noise = np.cumsum(white)
+        noise = noise / np.max(np.abs(noise))
+    else:
+        raise ValueError("Unsupported noise type")
+
+    noise = noise / np.max(np.abs(noise))
+    noiseyWave = wave + noise * noiseLevel
+    return noiseyWave
+
+# mixes the generated waveform with an external WAV file by averaging samples together
 
 
 def mixWithWav(wave, path):
