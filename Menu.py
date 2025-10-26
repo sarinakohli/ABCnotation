@@ -1,5 +1,5 @@
 # Menu for user interactions (provided by lecturer)
-#sample.abc reference: https://abcnotation.com/examples
+# sample.abc reference: https://abcnotation.com/examples
 #
 import os
 from pickle import TRUE
@@ -70,7 +70,10 @@ def option6():
 def option7():
     cls()
     print("Enter external WAV path to mix:")
-    settings["mixWavPath"] = input().strip()
+    i = input()
+    settings["mixWavPath"] = i
+    print("External WAV file set to:", {i})
+    input("Press Enter to continue...")
 
 
 def option8():
@@ -83,6 +86,9 @@ def option8():
             bpm=settings["bpm"],
             pitchShift=settings["pitchShift"]
         )
+
+        if settings.get("mixWavPath"):
+            wave = renderer.mixWithWav(wave, settings["mixWavPath"])
         renderer.play(wave)
     except Exception as e:
         print("Error during rendering or playback:", e)
@@ -99,6 +105,10 @@ def option9():
         bpm=settings["bpm"],
         pitchShift=settings["pitchShift"]
     )
+
+    if settings.get("mixWavPath"):
+        wave = renderer.mixWithWav(wave, settings["mixWavPath"])
+
     renderer.saveToWav(wave, outPath)
     print("Saved to", outPath)
 

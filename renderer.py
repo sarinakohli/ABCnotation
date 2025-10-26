@@ -5,7 +5,7 @@ import sounddevice as sd
 from scipy.io.wavfile import write
 from scipy import signal
 from music21 import converter, note
-from scipy.io.wavfile import read as wavread
+from scipy.io.wavfile import read as wav_read
 
 sampleRate = 44100
 
@@ -69,7 +69,7 @@ def add_noise(wave, noise="white", noiseLevel=0.02):
 
 
 def mixWithWav(wave, path):
-    rate, extWave = wavread(path)
+    rate, extWave = wav_read(path)
     extWave = extWave.astype(np.float32) / 32767.0
     minLen = min(len(wave), len(extWave))
     return 0.5 * (wave[:minLen] + extWave[:minLen])
