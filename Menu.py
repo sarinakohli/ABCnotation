@@ -1,38 +1,20 @@
+# Menu for user interactions (provided by lecturer)
+#sample.abc reference: https://abcnotation.com/examples
+#
 import os
 from pickle import TRUE
 import sys
-from dataclasses import dataclass
-from typing import List, Optional
+import renderer
 
-defaultBpm = 120
-sampleRate = 44100
-waveForms = ['sine', 'square', 'sawtooth', 'triangle']
-noiseType = ['white', 'pink', 'brown']
-
-
-@dataclass
-class noteEvent:
-    freq: Optional[float]
-    duration: float
-    velocity: float = 0.1
-
-
-class SongRenderer:
-    def __init__(self):
-        self.waveform = 'sine'
-        self.loudness = 0.8
-        self.abc_path = None
-        self.bpm = defaultBpm
-        self.pitchShift = 0
-        self.noiseTpye = None
-        self.noiseLevel = 0.0
-        self.mixWavPatch = None
-        self.adsr = (0.01, 0.05, 0.8, 0.08)
-        self.currentEvents: List[noteEvent] = []
-        self.headers = {}
-
-
-renderer = SongRenderer()
+settings = {
+    "waveform": "sine",
+    "loudness": 0.5,
+    "abcPath": "",
+    "bpm": 120,
+    "pitchShift": 0,
+    "noiseType": None,
+    "mixWavPath": None,
+}
 
 
 def cls():
@@ -42,59 +24,83 @@ def cls():
 def option1():
     cls()
     print("Select waveform:")
-    input()
+    settings["waveform"] = input().strip()
 
 
 def option2():
     cls()
     print("Enter loudness:")
-    input()
+    try:
+        settings["loudness"] = float(input().strip())
+    except:
+        print("Invalid loudness value.")
+        input()
 
 
 def option3():
     cls()
     print("Enter ABC file path:")
     i = input()
+    settings["abcPath"] = i
     try:
-        renderer.load_abc(i)
+        renderer.loadABC(i)
     except Exception as e:
         print("failed to load ABC:", e)
+        input()
 
 
 def option4():
     cls()
     print("Enter BPM:")
-    input()
+    settings["bpm"] = int(input().strip())
 
 
 def option5():
     cls()
     print("Enter pitch shift in semitones")
-    input()
+    settings["pitchShift"] = int(input().strip())
 
 
 def option6():
     cls()
     print("Select background noise type:")
-    input()
+    settings["noiseType"] = input().strip()
 
 
 def option7():
     cls()
     print("Enter external WAV path to mix:")
-    input()
+    settings["mixWavPath"] = input().strip()
 
 
 def option8():
     cls()
     print("Rendering and playing...")
-    input()
+    try:
+        wave = renderer.renderMusic(
+            waveform=settings["waveform"],
+            volume=settings["loudness"],
+            bpm=settings["bpm"],
+            pitchShift=settings["pitchShift"]
+        )
+        renderer.play(wave)
+    except Exception as e:
+        print("Error during rendering or playback:", e)
+        input()
 
 
 def option9():
     cls()
     print("Enter output WAV path:")
-    input()
+    outPath = input().strip()
+    wave = renderer.renderMusic(
+        waveform=settings["waveform"],
+        volume=settings["loudness"],
+        bpm=settings["bpm"],
+        pitchShift=settings["pitchShift"]
+    )
+    renderer.saveToWav(wave, outPath)
+    print("Saved to", outPath)
 
 
 def option10():
