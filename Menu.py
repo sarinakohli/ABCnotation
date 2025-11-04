@@ -60,8 +60,12 @@ def option3():
 def option4():
     cls()
     print("Enter BPM:")
-    settings["bpm"] = int(input().strip())
-
+    try:
+        settings["bpm"] = int(input().strip())
+        print("BPM updated to:", settings["bpm"])
+    except ValueError:
+        print("Invalid BPM value. Please enter a valid integer.")
+        input("Press Enter to continue...")
 
 def option5():
     cls()

@@ -50,17 +50,25 @@ def generateWaveform(frequency, duration, waveform="sine", volume=0.5):
 # renders full music piece by concatenating note waveforms
 
 
-def renderMusic(waveform="sine", volume=0.5, pitchShift=0):
+def renderMusic(waveform="sine", volume=0.5, bpm=120, pitchShift=0):
     global notesData
     if not notesData:
         raise Exception("No ABC file loaded")
 
     finalWav = np.array([], dtype=np.float32)
+    secondsPerBeat = 60 / bpm
+
     for freq, dur in notesData:
         shiftedFreq = freq * (2 ** (pitchShift / 12))
-        noteWav = generateWaveform(shiftedFreq, dur, waveform, volume)
+        realdur = dur * secondsPerBeat
+        if freq == 0:
+            noteWav = np.zeros(int(sampleRate * realdur), dtype=np.float32)
+        else:
+            noteWav = generateWaveform(shiftedFreq, realdur, waveform, volume)
         finalWav = np.concatenate((finalWav, noteWav))
+
     return finalWav
+
 
 # plays the generated waveform
 
