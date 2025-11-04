@@ -47,7 +47,7 @@ def generateWaveform(frequency, duration, waveform="sine", volume=0.5):
         wave = signal.sawtooth(2 * np.pi * frequency * t)
     return volume * wave
 
-# renders full music piece by concatenating note waveforms
+# renders full music piece by concatenating note waveforms, updating the pitch and bpm
 
 
 def renderMusic(waveform="sine", volume=0.5, bpm=120, pitchShift=0):

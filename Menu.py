@@ -7,7 +7,7 @@ from pickle import TRUE
 import sys
 import renderer
 
-# default settings using in menu options
+# default settings used in menu options
 settings = {
     "waveform": "sine",
     "loudness": 0.5,
@@ -26,11 +26,15 @@ def cls():
 
 # menu option functions
 
+# selecting waveform
+
 
 def option1():
     cls()
     print("Select waveform:")
     settings["waveform"] = input().strip()
+
+# setting loudness
 
 
 def option2():
@@ -56,6 +60,8 @@ def option3():
         print("failed to load ABC:", e)
         input()
 
+# changing BPM
+
 
 def option4():
     cls()
@@ -67,10 +73,15 @@ def option4():
         print("Invalid BPM value. Please enter a valid integer.")
         input("Press Enter to continue...")
 
+# shifting pitch
+
+
 def option5():
     cls()
     print("Enter pitch shift in semitones")
     settings["pitchShift"] = int(input().strip())
+
+# adding background noise
 
 
 def option6():
@@ -84,6 +95,8 @@ def option6():
         settings["noiseType"] = None
         print("Invalid noise type. No noise will be added.")
     input("Press Enter to continue...")
+
+# mixing within an external WAV file
 
 
 def option7():
@@ -141,6 +154,8 @@ def option9():
 
     renderer.saveToWav(wave, outPath)
     print("Saved to", outPath)
+
+# exit program
 
 
 def option10():
