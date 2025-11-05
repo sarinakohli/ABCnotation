@@ -1,15 +1,17 @@
-# loads abc file, generates waveforms, plays sound and saves to a WAV file
+# Renderer module to generate waveforms from ABC files
 # references:
 # Generating waveforms: https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.square.html
 # sounddevice for playback: https://python-sounddevice.readthedocs.io/en/0.4.6/
 # scipy.io.wavfile for WAV file handling: https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.write.html
 # music21 for ABC parsing: https://www.music21.org/music21docs/usersGuide/usersGuide_02_notes.html
+# music21 for reapting bars: https://www.music21.org/music21docs/moduleReference/moduleRepeat.html
 import numpy as np  # type: ignore
 import sounddevice as sd  # type: ignore
 from scipy.io.wavfile import write  # type: ignore
 from scipy import signal  # type: ignore
-from music21 import converter, note  # type: ignore
+from music21 import converter, note, repeat  # type: ignore
 from scipy.io.wavfile import read as wav_read  # type: ignore
+
 
 sampleRate = 44100
 
@@ -21,6 +23,13 @@ notesData = []
 def loadABC(filePath):
     global notesData
     score = converter.parse(filePath)
+
+    try:
+        expander = repeat(score)
+        score = expander.process()
+    except Exception as e:
+        print("Warning: could not expand repeats:", e)
+
     notesData = []
     for n in score .flat.notes:
         if isinstance(n, note.Note):
@@ -29,6 +38,30 @@ def loadABC(filePath):
             notesData.append((freq, dur))
     print("Loaded", len(notesData), "notes from", filePath)
     return notesData
+
+# applies ADSR envelope to a waveform
+
+
+def apply_adsr(wave, attack=0.05, decay=0.1, sustain=0.7, release=0.1):
+    n = len(wave)
+    a = int(n * attack)
+    d = int(n * decay)
+    r = int(n * release)
+    s = n - (a + d + r)
+    if s < 0:
+        s = 0
+
+    envelope = np.concatenate([
+        np.linspace(0, 1, a, endpoint=False),
+        np.linspace(1, sustain, d, endpoint=False),
+        np.ones(s) * sustain,
+        np.linspace(sustain, 0, r, endpoint=True)
+    ])
+
+    envelope = np.pad(
+        envelope, (0, max(0, n - len(envelope))), mode='constant')[:n]
+    return wave * envelope
+
 
 # generates waveform for a single note
 
@@ -45,6 +78,8 @@ def generateWaveform(frequency, duration, waveform="sine", volume=0.5):
         wave = signal.sawtooth(2 * np.pi * frequency * t)
     else:
         wave = signal.sawtooth(2 * np.pi * frequency * t)
+
+    wave = apply_adsr(wave, attack=0.05, decay=0.1, sustain=0.7, release=0.1)
     return volume * wave
 
 # renders full music piece by concatenating note waveforms, updating the pitch and bpm
@@ -56,11 +91,10 @@ def renderMusic(waveform="sine", volume=0.5, bpm=120, pitchShift=0):
         raise Exception("No ABC file loaded")
 
     finalWav = np.array([], dtype=np.float32)
-    secondsPerBeat = 60 / bpm
 
     for freq, dur in notesData:
         shiftedFreq = freq * (2 ** (pitchShift / 12))
-        realdur = dur * secondsPerBeat
+        realdur = dur * (120 / bpm)
         if freq == 0:
             noteWav = np.zeros(int(sampleRate * realdur), dtype=np.float32)
         else:
@@ -83,6 +117,15 @@ def play(wave):
 def saveToWav(wave, filename="output.wav"):
     write(filename, sampleRate, (wave * 32767).astype(np.int16))
     print("Save as", {filename})
+
+# saves the ABC file as a MIDI file using music21
+
+
+def saveToMidi(filePath, outPath="output.mid"):
+    score = converter.parse(filePath)
+    score.write('midi', fp=outPath)
+    print("MIDI file saved as", outPath)
+
 
 # adds noise to the waveform for white noise, pink noise, or brown noise
 
@@ -107,6 +150,8 @@ def add_noise(wave, noiseType="pink", noiseLevel=0.08):
         noise = noise / np.max(np.abs(noise))
     else:
         raise ValueError("Unsupported noise type")
+
+    envelope = np.sin(np.linspace(0, np.pi, n))
 
     noise = noise / np.max(np.abs(noise))
     noiseyWave = wave + noise * noiseLevel

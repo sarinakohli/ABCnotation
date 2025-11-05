@@ -25,7 +25,6 @@ def cls():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 # menu option functions
-
 # selecting waveform
 
 
@@ -155,10 +154,25 @@ def option9():
     renderer.saveToWav(wave, outPath)
     print("Saved to", outPath)
 
-# exit program
+# saves rendered music to MIDI file
 
 
 def option10():
+    cls()
+    if not settings["abcPath"]:
+        print("No ABC file loaded.")
+        input("Press Enter to continue...")
+        return
+    print("Enter output MIDI file path:")
+    outPath = input().strip()
+    renderer.saveToMidi(settings["abcPath"], outPath)
+    input("Press Enter to continue...")
+
+
+# exit program
+
+
+def option11():
     cls()
     yesNo = input("Are you sure you want to exit the program?(y=yes/n=no)")
     if yesNo == 'y':
@@ -178,7 +192,8 @@ if __name__ == "__main__":
         print("7) Mixing within an external WAV file")
         print("8) Playing the file")
         print("9) Saving the music as a WAV file")
-        print("10) exit")
+        print("10) Saving the music as a MIDI file")
+        print("11) exit")
         inputText = input("Please select a number between 1 and 10: ")
         match inputText:
             case '1':
@@ -200,6 +215,8 @@ if __name__ == "__main__":
             case '9':
                 option9()
             case '10':
+                option10()
+            case '11':
                 option10()
             case _:
                 cls()
